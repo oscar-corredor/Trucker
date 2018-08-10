@@ -1,2 +1,2 @@
-config.json
 API/node_modules/
+API/db/knexfile.js
