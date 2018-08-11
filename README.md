@@ -4,7 +4,7 @@ This is a side project that I've had in my mind for a while. It's main objective
 Whether there is an actual need in the market for this product or not is still unclear, the main purpose of developing this project is to improve my React and Express skills while also learning more about REST APIs and the usage of GraphQL.
 
 ## Objectives
-- Learn about OAuth
+- Learning about OAuth
 - Usage of Database First techniques for the ORM
 - Improving my React+Redux knowledge
 - Improving HTML and CSS knowledge
