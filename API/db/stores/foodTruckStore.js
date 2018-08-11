@@ -43,5 +43,30 @@ const getFoodTruckFromId = async (id) => {
   return foodTruck;
 };
 
+/**
+ * Test ideas: update the id of the entity, update with a null object,
+ *  update non-existing food truck, update non-existing property of the food truck
+ * @param {*} id 
+ * @param {*} patchedProperties 
+ */
+const updateFoodTruckLocation = async (id, patchedProperties) => {
+  const currentFoodTruck = await getFoodTruckFromId(id);
+  if (!currentFoodTruck) throw new DataStoreError('Attempted to patch non-existing food truck');
+  if (!patchedProperties) throw new DataStoreError('Null patched properties.');
+
+  Object.keys(patchedProperties).forEach((key) => {
+    if (key === 'id') throw new DataStoreError('The id of a foodtruck cannot be patched.');
+    // check that the patched properties indeed belong to the food truck entity
+    if (Object.getOwnPropertyNames(currentFoodTruck).indexOf(key) === -1) {
+      throw new DataStoreError('Attempted to update a non-existent property');
+    }
+    // VERIFY THE GEOJSON POINT
+  });
+  // check that
+  const affectedRows = await knex(tableNames.FOODTRUCK).where('id', id).update(patchedProperties, 'id');
+  return affectedRows.length > 0;
+};
+
 module.exports.getAllFoodTrucks = getAllFoodTrucks;
 module.exports.getFoodTruckFromId = getFoodTruckFromId;
+module.exports.updateFoodTruckLocation = updateFoodTruckLocation;
