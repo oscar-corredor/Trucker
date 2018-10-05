@@ -20,6 +20,7 @@ This section will be divided in those implemented and those pending implementati
 
 For a normal user:
 - Visualize food trucks near a certain location
+- testing mode
 - Visualize the details of a specific food truck (these details are pending to be defined)
 - Ordering food from a foodtruck
 - Visualizing the projected route of a food truck (to be further specified)

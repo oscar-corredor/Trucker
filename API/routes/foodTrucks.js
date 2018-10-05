@@ -33,10 +33,17 @@ router.patch('/:foodTruckId', async (req, res, next) => {
       res.status(200).send(foodTruckUpdated);
     } else res.status(404).send('Not Found');
   } catch (error) {
-    console.log(error);
     next(error.message);
   }
 });
 
+router.get('/nearby/:latitude,:longitude', async (req, res, next) => {
+  try {
+    const { latitude, longitude } = req.params;
+    res.status(200).send(await foodTrucksStore.getFoodTrucksNearby(latitude, longitude));
+  } catch (error) {
+    next(error.message);
+  }
+});
 
 module.exports = router;

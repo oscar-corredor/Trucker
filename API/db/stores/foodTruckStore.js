@@ -11,20 +11,24 @@ const st = knexPostgis(knex);
  * Data store that handles all CRUD operations related to foodtrucks.
  */
 
+
+const initializeFoodTrucks = selectedRows => selectedRows.map((selectedRow) => {
+  if (!FoodTruck.verifyRowObject(selectedRow)) {
+    throw new DataStoreError('Invalid row object received while fetching a Food Truck');
+  }
+  return new FoodTruck(selectedRow.id, selectedRow.name, selectedRow.currentLocation);
+});
+
 /**
  * @function getAllFoodTrucks
  * Function that fetches all food trucks from the database
  */
 const getAllFoodTrucks = async () => {
-  const selectedRows = await knex.select().from(tableNames.FOODTRUCK);
-  const foodTrucks = selectedRows.map((selectedRow) => {
-    if (!FoodTruck.verifyRowObject(selectedRow)) {
-      throw new DataStoreError('Invalid row object received while fetching a Food Truck');
-    }
-    return new FoodTruck(selectedRow.id, selectedRow.name, selectedRow.currentLocation);
-  });
+  const selectedRows = await knex.select('id', 'name', st.asGeoJSON('currentLocation')).from(tableNames.FOODTRUCK);
+  const foodTrucks = initializeFoodTrucks(selectedRows);
   return foodTrucks;
 };
+
 
 const getFoodTruckFromId = async (id) => {
   let foodTruck = null;
@@ -50,23 +54,41 @@ const getFoodTruckFromId = async (id) => {
  * @param {*} patchedProperties 
  */
 const updateFoodTruckLocation = async (id, patchedProperties) => {
+  console.log(patchedProperties);
   const currentFoodTruck = await getFoodTruckFromId(id);
   if (!currentFoodTruck) throw new DataStoreError('Attempted to patch non-existing food truck');
   if (!patchedProperties) throw new DataStoreError('Null patched properties.');
-
-  Object.keys(patchedProperties).forEach((key) => {
+  const updatedProperties = { ...patchedProperties };
+  Object.keys(updatedProperties).forEach((key) => {
     if (key === 'id') throw new DataStoreError('The id of a foodtruck cannot be patched.');
     // check that the patched properties indeed belong to the food truck entity
     if (Object.getOwnPropertyNames(currentFoodTruck).indexOf(key) === -1) {
       throw new DataStoreError('Attempted to update a non-existent property');
     }
-    // VERIFY THE GEOJSON POINT
+    if (key === 'currentLocation') {
+      updatedProperties.currentLocation = st.setSRID(
+        (st.makePoint(updatedProperties.currentLocation.coordinates[0],
+          updatedProperties.currentLocation.coordinates[1])), 4326,
+      );
+    }
   });
-  // check that
-  const affectedRows = await knex(tableNames.FOODTRUCK).where('id', id).update(patchedProperties, 'id');
+  const affectedRows = await knex(tableNames.FOODTRUCK).where('id', id).update(updatedProperties, 'id');
   return affectedRows.length > 0;
+};
+
+const getFoodTrucksNearby = async (latitude, longitude) => {
+  //   SELECT *
+  // FROM public."foodTruck"
+  // WHERE ST_Distance_Sphere("foodTruck"."currentLocation", ST_MakePoint(-99.147278, 19.375110))
+  //  <= 1000
+  const selectedRows = await knex
+    .select()
+    .from(tableNames.FOODTRUCK)
+    .whereRaw(`ST_Distance_Sphere("foodTruck"."currentLocation", ST_MakePoint(${longitude}, ${latitude})) <= 1000`);
+  return initializeFoodTrucks(selectedRows);
 };
 
 module.exports.getAllFoodTrucks = getAllFoodTrucks;
 module.exports.getFoodTruckFromId = getFoodTruckFromId;
 module.exports.updateFoodTruckLocation = updateFoodTruckLocation;
+module.exports.getFoodTrucksNearby = getFoodTrucksNearby;
